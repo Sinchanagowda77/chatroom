@@ -20,7 +20,6 @@ pipeline{
                 sh 'mvn compile'
             }
         }
-
         stage('trivy'){
             steps{
                 sh 'trivy fs --format json --output trivy-fs-result.json .'
@@ -30,9 +29,10 @@ pipeline{
             steps{
                 sh 'mvn package'
             }
-        }
-        post {
-         always {
+        }    
+    }
+    post {
+        always {
             script {
                 // Determine color based on build status
                 def color = currentBuild.currentResult == 'SUCCESS' ? 'green' : 'red'
@@ -47,7 +47,7 @@ pipeline{
                         <p><strong>Status:</strong> <span style="color:${color};">${currentBuild.currentResult}</span></p>
                         <p><strong>View build:</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
                     """,
-                    to: 'charanv369@gmail.com',
+                    to: 'sinchanagowda204@gmail.com',
                     from: 'jenkins@gmail.com',
                     replyTo: 'jenkins@gmail.com',
                     mimeType: 'text/html',
@@ -55,7 +55,5 @@ pipeline{
                 )
             }
         }
-        
-        }
-    
     }
+}
