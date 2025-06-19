@@ -1,7 +1,7 @@
 pipeline{
     agent any
     tools{
-        maven 'maven-3.9.10'
+        maven 'maven'
     } 
     stages{
         stage('clone'){
