@@ -1,12 +1,16 @@
+
 pipeline{
     agent any
     tools{
         maven 'maven'
     } 
+    environment {
+        SONARQUBE_HOME = tool 'sonarqube-scanner' 
+    }
     stages{
         stage('clone'){
             steps{
-                git 'https://github.com/VootlaSaiCharan/chatroom.git'
+                git 'https://github.com/lavanyavasudev/chatroom.git'
             }
         }
         stage('validate'){
@@ -22,7 +26,7 @@ pipeline{
         }
         stage('trivy-file-scan'){
             steps{
-                sh 'trivy fs --severity HIGH,CRITICAL --format json --output trivy-fs-result.json .'
+                sh 'trivy fs --severity UNKNOWN --exit-code 1 --format json --output trivy-fs-result.json .'
                 sh ''' trivy convert \
                 --format template --template "@/usr/local/share/trivy/templates/html.tpl" \
                 -o trivy-fs-result.html trivy-fs-result.json '''
@@ -31,6 +35,24 @@ pipeline{
         stage('package'){
             steps{
                 sh 'mvn package'
+            }
+        }
+        stage('sonarqube analysis'){
+            steps{
+                // Print the SONARQUBE_HOME variable for debugging
+                sh 'echo "$SONARQUBE_HOME"'
+                // Run SonarQube scanner with the specified project key and name
+                withSonarQubeEnv('sonarqube-server'){
+                    sh ''' $SONARQUBE_HOME/bin/sonar-scanner -Dsonar.projectKey=chatroom \
+                        -Dsonar.projectName=chatroom -Dsonar.java.binaries=target '''
+                }
+            }
+        }
+        stage('sonarqube quality gate'){
+            steps{
+                timeout(time: 60, unit: 'SECONDS') {
+                    waitForQualityGate abortPipeline: true, credentialsId: 'sonarqube-cred'
+                }
             }
         }
         stage('deploy'){
